@@ -44,7 +44,8 @@ MODE_MAP = {
     2: "a"
 }
 
-
+# TODO: There should really be multiple parsers for the different formats and then another bit of code that figures
+#       out the file type and calls the appropriate parser.
 class ReplayParser:
     def __init__(self, filename):
         self.filename = filename
