@@ -88,7 +88,7 @@ class ReplayParser:
         return self.bytes_read[:4] == "RPLY"
 
     def _check_file_version(self):
-        return self.bytes_read[4:8] == 3
+        return self._unpack_int(0x04) == FILE_VERSION
 
     def _read_bytes(self, start, length):
         return self.bytes_read[start:(start + length)]
@@ -112,7 +112,7 @@ class ReplayParser:
         if not self._check_magic_number():
             raise Exception("Unknown File")
 
-        if not self._check_magic_number():
+        if not self._check_file_version():
             raise Exception("Unknown replay file format")
 
         spy_name_len = ord(self.bytes_read[0x2E])
