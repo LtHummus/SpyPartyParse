@@ -5,7 +5,7 @@ import json
 STATE_START = "STATE_START"
 STATE_FOUND_GROUP_TOKEN = "STATE_FOUND_GROUP_TOKEN"
 
-LIST_GROUPS = {'objects', 'missions', 'events', 'situations'}
+LIST_GROUPS = {'objects', 'missions', 'events'}
 
 
 # THIS IS GARBAGE
@@ -26,7 +26,7 @@ class JournalParser:
                 continue
             if tokens[0] == '}':
                 if self.situations:
-                    print "ok"
+                    pass
                 elif self.is_list and not self.just_closed_groups:
                     self.curr_list.append(self.curr_group)
                     self.just_closed_groups = True
@@ -34,6 +34,9 @@ class JournalParser:
                 else:
                     self.curr_group = self.old_group
                     self.old_group = None
+                    self.just_closed_groups = False
+                    self.situations = False
+                    self.is_list = False
                     continue
 
             self.just_closed_groups = False
@@ -45,6 +48,7 @@ class JournalParser:
                 self.curr_group = {}
             elif tokens[0] == "group":
                 # we found a new group
+                self.situations = False
                 if tokens[1] == 'situations':
                     self.old_group = self.curr_group
                     self.curr_group[tokens[1]] = []
@@ -61,9 +65,6 @@ class JournalParser:
                     self.curr_group[tokens[1]] = {}
                     self.curr_group = self.curr_group[tokens[1]]
                     self.is_list = False
-            elif tokens[0] == "groups":
-                pass  # TODO: fill this in
-
             else:
                 if self.situations:
                     self.curr_list.append(tokens[3])
