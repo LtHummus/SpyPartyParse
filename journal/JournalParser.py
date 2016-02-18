@@ -1,11 +1,23 @@
 
 import sys
-import json
+import lzma
+from EventTypes import JOURNAL_EVENTS
 
 STATE_START = "STATE_START"
 STATE_FOUND_GROUP_TOKEN = "STATE_FOUND_GROUP_TOKEN"
 
 LIST_GROUPS = {'objects', 'missions', 'events'}
+
+BANNED_FIELDS = {
+    'GL_RENDERER',
+    'GL_VENDOR',
+    'GL_VERSION',
+    'Adapter',
+    'MachineName',
+    'MachineUserName',
+    'WindowHeight',
+    'WindowWidth'
+}
 
 
 # THIS IS GARBAGE
@@ -21,7 +33,6 @@ class JournalParser:
         self.situations = False
         for line in data.split('\n'):
             tokens = line.split()
-            print tokens
             if len(tokens) == 0:
                 continue
             if tokens[0] == '}':
@@ -73,17 +84,35 @@ class JournalParser:
                     if data[0] == '"' and data[-1] == '"':
                         data = data[1:-1]
 
-                    self.curr_group[tokens[1]] = data
+                    if tokens[1] not in BANNED_FIELDS:
+                        self.curr_group[tokens[1]] = data
+
+        # for security concerns, delete PII
+        del self.top_group['spyparty_journal']['CPUIDs']
+
 
 
 if __name__ == '__main__':
     filename = sys.argv[1]
-    print filename
 
-    with open(filename, 'r') as f:
-        journal = f.read()
+    with lzma.open(filename, 'rt') as uncompressed:
+        raw = str(uncompressed.read())
 
-    journal = JournalParser(journal).top_group
+    journal = JournalParser(raw).top_group
 
-    print json.dumps(journal)
+    original_game_duration = float(journal['spyparty_journal']['OriginalGameDuration'])
+    for event in journal['spyparty_journal']['events']:
+        game_time = original_game_duration - float(event['GameTime'])
+        minutes, seconds = divmod(game_time, 60)
+        event_description = JOURNAL_EVENTS[event['Event3CC']]
+
+        if event['Event3CC'] == 'STf':
+            event_description %= int(event['Value'])
+
+        if event['Event3CC'].startswith('AT'):
+            # potential format string attack
+            event_description = event_description % (journal['spyparty_journal']['situations'][int(event['Situation'])])
+
+        print("%02d:%04.1f -- %s" % (minutes, seconds, event_description))
+
 
