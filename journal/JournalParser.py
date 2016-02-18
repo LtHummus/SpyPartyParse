@@ -23,73 +23,71 @@ BANNED_FIELDS = {
 # THIS IS GARBAGE
 class JournalParser:
     def __init__(self, data):
-        self.state = STATE_START
-        self.is_list = False
+        is_list = False
         self.top_group = {}
-        self.curr_group = self.top_group
-        self.old_group = None
-        self.curr_list = None
-        self.just_closed_groups = False
-        self.situations = False
+        curr_group = self.top_group
+        old_group = None
+        curr_list = None
+        just_closed_groups = False
+        situations = False
         for line in data.split('\n'):
             tokens = line.split()
             if len(tokens) == 0:
                 continue
             if tokens[0] == '}':
-                if self.situations:
+                if situations:
                     pass
-                elif self.is_list and not self.just_closed_groups:
-                    self.curr_list.append(self.curr_group)
-                    self.just_closed_groups = True
+                elif is_list and not just_closed_groups:
+                    curr_list.append(curr_group)
+                    just_closed_groups = True
                     continue
                 else:
-                    self.curr_group = self.old_group
-                    self.old_group = None
-                    self.just_closed_groups = False
-                    self.situations = False
-                    self.is_list = False
+                    curr_group = old_group
+                    old_group = None
+                    just_closed_groups = False
+                    situations = False
+                    is_list = False
                     continue
 
-            self.just_closed_groups = False
+            just_closed_groups = False
             if len(tokens) < 2:
                 continue
             if tokens[0] == "groups":
-                assert self.is_list
+                assert is_list
 
-                self.curr_group = {}
+                curr_group = {}
             elif tokens[0] == "group":
                 # we found a new group
-                self.situations = False
+                situations = False
                 if tokens[1] == 'situations':
-                    self.old_group = self.curr_group
-                    self.curr_group[tokens[1]] = []
-                    self.curr_list = self.curr_group[tokens[1]]
-                    self.is_list = True
-                    self.situations = True
+                    old_group = curr_group
+                    curr_group[tokens[1]] = []
+                    curr_list = curr_group[tokens[1]]
+                    is_list = True
+                    situations = True
                 elif tokens[1] in LIST_GROUPS:
-                    self.old_group = self.curr_group
-                    self.curr_group[tokens[1]] = []
-                    self.curr_list = self.curr_group[tokens[1]]
-                    self.is_list = True
+                    old_group = curr_group
+                    curr_group[tokens[1]] = []
+                    curr_list = curr_group[tokens[1]]
+                    is_list = True
                 else:
-                    self.old_group = self.curr_group
-                    self.curr_group[tokens[1]] = {}
-                    self.curr_group = self.curr_group[tokens[1]]
-                    self.is_list = False
+                    old_group = curr_group
+                    curr_group[tokens[1]] = {}
+                    curr_group = curr_group[tokens[1]]
+                    is_list = False
             else:
-                if self.situations:
-                    self.curr_list.append(tokens[3])
+                if situations:
+                    curr_list.append(tokens[3])
                 else:
                     data = ' '.join(tokens[3:])
                     if data[0] == '"' and data[-1] == '"':
                         data = data[1:-1]
 
                     if tokens[1] not in BANNED_FIELDS:
-                        self.curr_group[tokens[1]] = data
+                        curr_group[tokens[1]] = data
 
         # for security concerns, delete PII
         del self.top_group['spyparty_journal']['CPUIDs']
-
 
 
 if __name__ == '__main__':
