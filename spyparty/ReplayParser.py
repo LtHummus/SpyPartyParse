@@ -2,7 +2,11 @@
 
 import struct
 import datetime
-import uuid
+import base64
+
+from ReplayVersion3Offsets import ReplayVersion3Offsets
+from ReplayVersion4Offsets import ReplayVersion4Offsets
+from ReplayVersion5Offsets import ReplayVersion5Offsets
 
 FILE_VERSION = 3
 
@@ -17,25 +21,36 @@ RESULT_MAP = {
 def endian_swap(value):
     return struct.unpack("<I", struct.pack(">I", value))[0]
 
+
 # LOL
 # TODO: since level IDs are generated based on the hash of the level file, multiple
 #       ids will map to the same level.  This table is definitely incomplete
 LEVEL_MAP = {
     endian_swap(0x26C3303A): "BvB High-Rise",
     endian_swap(0xAAFA9659): "BvB (New Art) Ballroom",
-    endian_swap(0x2519125B): "New Art Ballroom",
+    endian_swap(0x2519125B): "Ballroom",
     endian_swap(0xA1C5561A): "High-Rise",
-    endian_swap(0x5EAAB328): "Gallery",
+    endian_swap(0x5EAAB328): "Old Gallery",
     endian_swap(0x750C0A29): "Courtyard 2",
     endian_swap(0x83F59536): "Panopticon",
-    endian_swap(0x91A0BEA8): "Veranda",
-    endian_swap(0xBC1F89B8): "Balcony",
+    endian_swap(0x91A0BEA8): "Old Veranda",
+    endian_swap(0xBC1F89B8): "Old Balcony",
     endian_swap(0x4073020D): "Crowded Pub",
     endian_swap(0xF3FF853B): "Pub",
     endian_swap(0xB0E7C209): "Old Ballroom",
     endian_swap(0x6B68CFB4): "Courtyard 1",
     endian_swap(0x8FE37670): "Double Modern",
-    endian_swap(0x206114E6): "Modern"
+    endian_swap(0x206114E6): "Modern",
+    0x6f81a558: "Veranda",
+    0x9dc5bb5e: "Courtyard",
+    0x168f4f62: "Library",
+    0x1dbd8e41: "Balcony",
+    0x7173b8bf: "Gallery",
+    0x9032ce22: "Terrace",
+    0x2e37f15b: "Moderne"
+
+
+
 }
 
 MODE_MAP = {
@@ -44,12 +59,15 @@ MODE_MAP = {
     2: "a"
 }
 
-# TODO: There should really be multiple parsers for the different formats and then another bit of code that figures
-#       out the file type and calls the appropriate parser.
+
+HEADER_DATA_MINIMUM_BYTES = 416
+
+
 class ReplayParser:
-    def __init__(self, filename):
-        self.filename = filename
-        self.bytes_read = None
+    def __init__(self, bytes):
+        if len(bytes) < HEADER_DATA_MINIMUM_BYTES:
+            raise Exception("We require a minimum of %d bytes for replay parsing" % HEADER_DATA_MINIMUM_BYTES)
+        self.bytes_read = bytes
 
     def _unpack_missions(self, offset):
         data = self._unpack_int(offset)
@@ -89,7 +107,16 @@ class ReplayParser:
         return self.bytes_read[:4] == "RPLY"
 
     def _check_file_version(self):
-        return self._unpack_int(0x04) == FILE_VERSION
+        read_file_version = self._unpack_int(0x04)
+
+        if read_file_version == 3:
+            return ReplayVersion3Offsets()
+        elif read_file_version == 4:
+            return ReplayVersion4Offsets()
+        elif read_file_version == 5:
+            return ReplayVersion5Offsets()
+        else:
+            raise Exception("Unknown file version %d" % read_file_version)
 
     def _read_bytes(self, start, length):
         return self.bytes_read[start:(start + length)]
@@ -107,53 +134,52 @@ class ReplayParser:
         return struct.unpack('f', self._read_bytes(offset, 4))[0]
 
     def parse(self):
-        with open(self.filename, "rb") as f:
-            self.bytes_read = f.read(80 + 2 * 33)
-
         if not self._check_magic_number():
             raise Exception("Unknown File")
 
-        if not self._check_file_version():
-            raise Exception("Unknown replay file format")
+        ret = {}
 
-        spy_name_len = ord(self.bytes_read[0x2E])
-        sniper_name_len = ord(self.bytes_read[0x2F])
+        offsets = self._check_file_version()
 
-        spy_name = self._read_bytes(0x50, spy_name_len)
-        sniper_name = self._read_bytes(0x50 + spy_name_len, sniper_name_len)
+        ret['spy_username'] = offsets.extract_spy_username(self.bytes_read)
+        ret['sniper_username'] = offsets.extract_sniper_username(self.bytes_read)
 
-        result = RESULT_MAP[self._unpack_int(0x30)]
+        ret['result'] = RESULT_MAP[self._unpack_int(offsets.get_game_result_offset())]
 
-        replay_map = LEVEL_MAP[self._unpack_int(0x38)]
+        try:
+            ret['level'] = LEVEL_MAP[self._unpack_int(offsets.get_level_offset())]
+        except KeyError:
+            read_hash = self._unpack_int(offsets.get_level_offset())
+            raise Exception("Unknown map hash %x" % read_hash)
 
-        selected_missions = self._unpack_missions(0x3C)
-        picked_missions = self._unpack_missions(0x40)
-        completed_missions = self._unpack_missions(0x44)
+        ret['selected_missions'] = self._unpack_missions(offsets.get_selected_missions_offset())
+        ret['picked_missions'] = self._unpack_missions(offsets.get_picked_missions_offset())
+        ret['completed_missions'] = self._unpack_missions(offsets.get_completed_missions_offset())
 
-        sequence_number = self._unpack_short(0x2C)
-        match_id = self._unpack_short(0x2A)
+        ret['sequence_number'] = self._unpack_short(offsets.get_sequence_number_offset())
 
-        start_time = datetime.datetime.fromtimestamp(self._unpack_int(0x28))
+        ret['start_time'] = datetime.datetime.fromtimestamp(self._unpack_int(offsets.get_timestamp_offset()))
 
-        duration = int(self._unpack_float(0x14))
-        game_type = self._get_game_type(self._unpack_int(0x34))
+        ret['duration'] = int(self._unpack_float(offsets.get_duration_offset()))
+        ret['game_type'] = self._get_game_type(self._unpack_int(offsets.get_game_type_offset()))
 
-        # TODO: this I assume is the long string of ASCII in the filename...not sure
-        #       how the mapping works
-        game_uuid = uuid.UUID(bytes=self.bytes_read[0x18:0x18+16])
+        uuid_offset = offsets.get_uuid_offset()
+        ret['uuid'] = base64.urlsafe_b64encode(self.bytes_read[uuid_offset:uuid_offset+16])
 
-        return {
-            'spy': spy_name,
-            'sniper': sniper_name,
-            'map': replay_map,
-            'game_type': game_type,
-            'selected_missions': selected_missions,
-            'picked_missions': picked_missions,
-            'completed_missions': completed_missions,
-            'duration': duration,
-            'result': result,
-            'game_time': start_time,
-            'sequence_number': sequence_number,
-            'match_id': match_id,
-            'uuid': str(game_uuid)
-        }
+        if ret['uuid'].find('=') > 0:
+            ret['uuid'] = ret['uuid'][:ret['uuid'].find('=')]
+
+        if offsets.contains_display_names():
+            ret['spy_displayname'] = offsets.extract_spy_display_name(self.bytes_read)
+            ret['sniper_displayname'] = offsets.extract_sniper_display_name(self.bytes_read)
+        else:
+            ret['spy_displayname'] = ret['spy_username']
+            ret['sniper_displayname'] = ret['sniper_username']
+
+        if offsets.contains_guest_count():
+            ret['guest_count'] = self._unpack_int(offsets.get_guest_count_offset())
+
+        if offsets.contains_start_clock():
+            ret['start_clock_seconds'] = self._unpack_int(offsets.get_start_duration_offset())
+
+        return ret
