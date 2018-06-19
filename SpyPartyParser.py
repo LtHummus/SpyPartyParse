@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     filename = sys.argv[1]
     with open(filename, "rb") as f:
-        bytes_read = f.read(80 + 2 * 33)
+        bytes_read = f.read(416)
 
         parser = ReplayParser(bytes_read)
         results = parser.parse()

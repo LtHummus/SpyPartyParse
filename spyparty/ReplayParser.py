@@ -60,8 +60,13 @@ MODE_MAP = {
 }
 
 
+HEADER_DATA_MINIMUM_BYTES = 416
+
+
 class ReplayParser:
     def __init__(self, bytes):
+        if len(bytes) < HEADER_DATA_MINIMUM_BYTES:
+            raise Exception("We require a minimum of %d bytes for replay parsing" % HEADER_DATA_MINIMUM_BYTES)
         self.bytes_read = bytes
 
     def _unpack_missions(self, offset):
