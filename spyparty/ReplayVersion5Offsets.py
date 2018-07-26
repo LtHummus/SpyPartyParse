@@ -79,7 +79,7 @@ class ReplayVersion5Offsets(ReplayOffsets):
         spy_displayname_length = ord(bytes[0x30])
         sniper_displayname_length = ord(bytes[0x31])
         if sniper_displayname_length == 0:
-            return self.extract_spy_username(bytes)
+            return self.extract_sniper_username(bytes)
         else:
             return self._read_bytes(bytes, 0x60 + spy_username_length + sniper_username_length + spy_displayname_length, sniper_displayname_length)
 
