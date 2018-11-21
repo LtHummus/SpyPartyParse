@@ -61,3 +61,4 @@ class ReplayVersion3Offsets(ReplayOffsets):
 
     def get_completed_missions_offset(self):
         return 0x44
+

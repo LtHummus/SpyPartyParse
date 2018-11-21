@@ -80,6 +80,13 @@ class ReplayOffsets(object):
     def contains_start_clock(self):
         return False
 
+    def contains_map_variant(self):
+        return False
+
+    @abstractmethod
+    def get_map_variant_offset(self):
+        pass
+
     @abstractmethod
     def get_game_result_offset(self):
         pass

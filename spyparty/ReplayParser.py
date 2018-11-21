@@ -7,6 +7,7 @@ import base64
 from ReplayVersion3Offsets import ReplayVersion3Offsets
 from ReplayVersion4Offsets import ReplayVersion4Offsets
 from ReplayVersion5Offsets import ReplayVersion5Offsets
+from ReplayVersion6Offsets import ReplayVersion6Offsets
 
 FILE_VERSION = 3
 
@@ -47,7 +48,8 @@ LEVEL_MAP = {
     0x1dbd8e41: "Balcony",
     0x7173b8bf: "Gallery",
     0x9032ce22: "Terrace",
-    0x2e37f15b: "Moderne"
+    0x2e37f15b: "Moderne",
+    0x79dfa0cf: "Teien"
 
 
 
@@ -115,6 +117,8 @@ class ReplayParser:
             return ReplayVersion4Offsets()
         elif read_file_version == 5:
             return ReplayVersion5Offsets()
+        elif read_file_version == 6:
+            return ReplayVersion6Offsets()
         else:
             raise Exception("Unknown file version %d" % read_file_version)
 
@@ -165,6 +169,9 @@ class ReplayParser:
 
         uuid_offset = offsets.get_uuid_offset()
         ret['uuid'] = base64.urlsafe_b64encode(self.bytes_read[uuid_offset:uuid_offset+16])
+
+        if offsets.contains_map_variant():
+            ret['map_variant'] = self._unpack_int(offsets.get_map_variant_offset())
 
         if ret['uuid'].find('=') > 0:
             ret['uuid'] = ret['uuid'][:ret['uuid'].find('=')]
