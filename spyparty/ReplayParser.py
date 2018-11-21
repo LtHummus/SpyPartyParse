@@ -18,6 +18,19 @@ RESULT_MAP = {
     3: "Civilian Shot"
 }
 
+VARIANT_MAP = {
+    "Teien": [
+        "BooksBooksBooks",
+        "BooksStatuesBooks",
+        "StatuesBooksBooks",
+        "StatuesStatuesBooks",
+        "BooksBooksStatues",
+        "BooksStatuesStatues",
+        "StatuesBooksStatues",
+        "StatuesStatuesStatues"
+    ]
+}
+
 
 def endian_swap(value):
     return struct.unpack("<I", struct.pack(">I", value))[0]
@@ -171,7 +184,7 @@ class ReplayParser:
         ret['uuid'] = base64.urlsafe_b64encode(self.bytes_read[uuid_offset:uuid_offset+16])
 
         if offsets.contains_map_variant():
-            ret['map_variant'] = self._unpack_int(offsets.get_map_variant_offset())
+            ret['map_variant'] = VARIANT_MAP[ret['level']][self._unpack_int(offsets.get_map_variant_offset())]
 
         if ret['uuid'].find('=') > 0:
             ret['uuid'] = ret['uuid'][:ret['uuid'].find('=')]
