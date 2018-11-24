@@ -63,9 +63,6 @@ LEVEL_MAP = {
     0x9032ce22: "Terrace",
     0x2e37f15b: "Moderne",
     0x79dfa0cf: "Teien"
-
-
-
 }
 
 MODE_MAP = {
@@ -184,7 +181,10 @@ class ReplayParser:
         ret['uuid'] = base64.urlsafe_b64encode(self.bytes_read[uuid_offset:uuid_offset+16])
 
         if offsets.contains_map_variant():
-            ret['map_variant'] = VARIANT_MAP[ret['level']][self._unpack_int(offsets.get_map_variant_offset())]
+            try:
+                ret['map_variant'] = VARIANT_MAP[ret['level']][self._unpack_int(offsets.get_map_variant_offset())]
+            except KeyError:
+                pass
 
         if ret['uuid'].find('=') > 0:
             ret['uuid'] = ret['uuid'][:ret['uuid'].find('=')]
