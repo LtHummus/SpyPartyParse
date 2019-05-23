@@ -11,10 +11,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     filename = sys.argv[1]
-    with open(filename, "rb") as f:
-        bytes_read = f.read(416)
+    parser = ReplayParser(filename)
+    results = parser.parse()
 
-        parser = ReplayParser(bytes_read)
-        results = parser.parse()
-
-        print results
+    print results
