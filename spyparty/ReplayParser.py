@@ -28,7 +28,8 @@ VARIANT_MAP = {
         "BooksStatuesStatues",
         "StatuesBooksStatues",
         "StatuesStatuesStatues"
-    ]
+    ],
+    "Aquarium": ["Bottom", "Top"],
 }
 
 
@@ -62,7 +63,8 @@ LEVEL_MAP = {
     0x7173b8bf: "Gallery",
     0x9032ce22: "Terrace",
     0x2e37f15b: "Moderne",
-    0x79dfa0cf: "Teien"
+    0x79dfa0cf: "Teien",
+    0x98e45d99: "Aquarium",
 }
 
 MODE_MAP = {
