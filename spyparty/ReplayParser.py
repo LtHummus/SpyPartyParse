@@ -113,7 +113,7 @@ class ReplayParser:
 
         real_mode = MODE_MAP[mode]
         if real_mode == "k":
-            return "k" + str(available)
+            return "k" + str(required)
 
         return "%s%d/%d" % (real_mode, required, available)
 
