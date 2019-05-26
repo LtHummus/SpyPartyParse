@@ -1,4 +1,4 @@
-from ReplayOffsets import ReplayOffsets
+from spyparty.ReplayOffsets import ReplayOffsets
 
 
 class ReplayVersion6Offsets(ReplayOffsets):
