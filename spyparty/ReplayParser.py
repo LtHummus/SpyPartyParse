@@ -78,10 +78,13 @@ HEADER_DATA_MINIMUM_BYTES = 416
 
 
 class ReplayParser:
-    def __init__(self, bytes):
-        if len(bytes) < HEADER_DATA_MINIMUM_BYTES:
+    def __init__(self, replay_file_path):
+        with open(replay_file_path, "rb") as replay_file:
+            bytes_read = bytearray(replay_file.read())
+
+        if len(bytes_read) < HEADER_DATA_MINIMUM_BYTES:
             raise Exception("We require a minimum of %d bytes for replay parsing" % HEADER_DATA_MINIMUM_BYTES)
-        self.bytes_read = bytes
+        self.bytes_read = bytes_read
 
     def _unpack_missions(self, offset):
         data = self._unpack_int(offset)
@@ -118,7 +121,7 @@ class ReplayParser:
         return "%s%d/%d" % (real_mode, required, available)
 
     def _check_magic_number(self):
-        return self.bytes_read[:4] == "RPLY"
+        return self.bytes_read[:4] == b"RPLY"
 
     def _check_file_version(self):
         read_file_version = self._unpack_int(0x04)
@@ -180,7 +183,7 @@ class ReplayParser:
         ret['game_type'] = self._get_game_type(self._unpack_int(offsets.get_game_type_offset()))
 
         uuid_offset = offsets.get_uuid_offset()
-        ret['uuid'] = base64.urlsafe_b64encode(self.bytes_read[uuid_offset:uuid_offset+16])
+        ret['uuid'] = base64.urlsafe_b64encode(self.bytes_read[uuid_offset:uuid_offset+16]).decode()
 
         if offsets.contains_map_variant():
             try:

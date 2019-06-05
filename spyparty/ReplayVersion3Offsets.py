@@ -27,13 +27,13 @@ class ReplayVersion3Offsets(ReplayOffsets):
         return 0x2C
 
     def extract_spy_username(self, bytes):
-        spy_username_length = ord(bytes[0x2E])
-        return self._read_bytes(bytes, 0x50, spy_username_length)
+        spy_username_length = bytes[0x2E]
+        return self._read_bytes(bytes, 0x50, spy_username_length).decode()
 
     def extract_sniper_username(self, bytes):
-        spy_username_length = ord(bytes[0x2E])
-        sniper_username_length = ord(bytes[0x2F])
-        return self._read_bytes(bytes, 0x50 + spy_username_length, sniper_username_length)
+        spy_username_length = bytes[0x2E]
+        sniper_username_length = bytes[0x2F]
+        return self._read_bytes(bytes, 0x50 + spy_username_length, sniper_username_length).decode()
 
     def contains_display_names(self):
         return False

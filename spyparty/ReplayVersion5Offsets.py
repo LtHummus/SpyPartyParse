@@ -27,13 +27,13 @@ class ReplayVersion5Offsets(ReplayOffsets):
         return 0x2C
 
     def extract_spy_username(self, bytes):
-        spy_username_length = ord(bytes[0x2E])
-        return self._read_bytes(bytes, 0x60, spy_username_length)
+        spy_username_length = bytes[0x2E]
+        return self._read_bytes(bytes, 0x60, spy_username_length).decode()
 
     def extract_sniper_username(self, bytes):
-        spy_username_length = ord(bytes[0x2E])
-        sniper_username_length = ord(bytes[0x2F])
-        return self._read_bytes(bytes, 0x60 + spy_username_length, sniper_username_length)
+        spy_username_length = bytes[0x2E]
+        sniper_username_length = bytes[0x2F]
+        return self._read_bytes(bytes, 0x60 + spy_username_length, sniper_username_length).decode()
 
     def contains_display_names(self):
         return True
@@ -64,24 +64,24 @@ class ReplayVersion5Offsets(ReplayOffsets):
 
     def extract_spy_display_name(self, bytes):
         assert self.contains_display_names()
-        spy_username_length = ord(bytes[0x2E])
-        sniper_username_length = ord(bytes[0x2F])
-        spy_displayname_length = ord(bytes[0x30])
+        spy_username_length = bytes[0x2E]
+        sniper_username_length = bytes[0x2F]
+        spy_displayname_length = bytes[0x30]
         if spy_displayname_length == 0:
             return self.extract_spy_username(bytes)
         else:
-            return self._read_bytes(bytes, 0x60 + spy_username_length + sniper_username_length, spy_displayname_length)
+            return self._read_bytes(bytes, 0x60 + spy_username_length + sniper_username_length, spy_displayname_length).decode()
 
     def extract_sniper_display_name(self, bytes):
         assert self.contains_display_names()
-        spy_username_length = ord(bytes[0x2E])
-        sniper_username_length = ord(bytes[0x2F])
-        spy_displayname_length = ord(bytes[0x30])
-        sniper_displayname_length = ord(bytes[0x31])
+        spy_username_length = bytes[0x2E]
+        sniper_username_length = bytes[0x2F]
+        spy_displayname_length = bytes[0x30]
+        sniper_displayname_length = bytes[0x31]
         if sniper_displayname_length == 0:
             return self.extract_sniper_username(bytes)
         else:
-            return self._read_bytes(bytes, 0x60 + spy_username_length + sniper_username_length + spy_displayname_length, sniper_displayname_length)
+            return self._read_bytes(bytes, 0x60 + spy_username_length + sniper_username_length + spy_displayname_length, sniper_displayname_length).decode()
 
     def get_guest_count_offset(self):
         return 0x50
