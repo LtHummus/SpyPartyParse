@@ -1,6 +1,6 @@
 import struct
 
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 
 
 # TODO:

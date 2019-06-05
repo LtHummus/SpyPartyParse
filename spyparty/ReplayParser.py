@@ -4,10 +4,10 @@ import struct
 import datetime
 import base64
 
-from ReplayVersion3Offsets import ReplayVersion3Offsets
-from ReplayVersion4Offsets import ReplayVersion4Offsets
-from ReplayVersion5Offsets import ReplayVersion5Offsets
-from ReplayVersion6Offsets import ReplayVersion6Offsets
+from spyparty.ReplayVersion3Offsets import ReplayVersion3Offsets
+from spyparty.ReplayVersion4Offsets import ReplayVersion4Offsets
+from spyparty.ReplayVersion5Offsets import ReplayVersion5Offsets
+from spyparty.ReplayVersion6Offsets import ReplayVersion6Offsets
 
 FILE_VERSION = 3
 
