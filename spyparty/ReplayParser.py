@@ -65,6 +65,7 @@ LEVEL_MAP = {
     0x2e37f15b: "Moderne",
     0x79dfa0cf: "Teien",
     0x98e45d99: "Aquarium",
+    0x35ac5135: "Redwoods",
 }
 
 MODE_MAP = {
